@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rebel XatSpace PRO</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Oswald:wght@500;700&family=Space+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --azul-pumas: #002D62; 
+            --azul-brillo: #00d2ff; /* Lo hice un poco más celeste neón para que resalte más en el cursor y fotos */
+            --oro: #C5B078;
+            --bg-cristal: rgba(10, 15, 25, 0.75);
+            --borde-cristal: rgba(0, 210, 255, 0.2);
+        }
+
+        /* Ocultar el cursor por defecto para usar el nuestro brillante */
+        body {
+            margin: 0;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            background: url('https://xatimg.com/image/bnmxjpn7lXpn.png') center/cover no-repeat fixed;
+            color: #fff;
+            box-sizing: border-box;
+            overflow: hidden;
+            cursor: none; /* Magia: Oculta el ratón normal */
+        }
+
+        /* --- CURSOR BRILLANTE PERSONALIZADO --- */
+        .cursor-glow {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, rgba(0, 210, 255, 0.8) 0%, rgba(0, 210, 255, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none; /* Súper importante para poder hacer clics a través de él */
+            transform: translate(-50%, -50%);
+            z-index: 999999;
+            transition: width 0.2s ease, height 0.2s ease, background 0.2s ease;
+            mix-blend-mode: screen;
+        }
+
+        /* Un punto blanco al centro del cursor */
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1000000;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        /* --- PANTALLA DE INICIO (INTRO) --- */
+        #pantalla-intro {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: all 0.5s ease;
+        }
+
+        .intro-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: inherit; filter: grayscale(100%) blur(5px);
+            z-index: -1; transition: opacity 2s ease;
+        }
+        
+        .intro-bg-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); z-index: -1; transition: opacity 2s ease;
+        }
+
+        .intro-contenido { text-align: center; transition: opacity 0.5s ease, transform 0.5s ease; }
+
+        .intro-titulo {
+            font-family: 'Oswald', sans-serif; font-size: 5rem; color: #fff; margin: 0;
+            text-transform: uppercase; letter-spacing: 5px;
+            text-shadow: 0 0 30px var(--azul-brillo); animation: latido 2s infinite alternate;
+        }
+
+        .intro-sub {
+            font-size: 14px; color: var(--oro); margin-top: 10px; letter-spacing: 2px;
+            animation: parpadeo 1.5s infinite;
+        }
+
+        @keyframes latido {
+            0% { transform: scale(1); text-shadow: 0 0 20px var(--azul-brillo); }
+            100% { transform: scale(1.05); text-shadow: 0 0 50px var(--azul-brillo), 0 0 10px #fff; }
+        }
+        @keyframes parpadeo { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .card {
+            width: 95vw; max-width: 360px; height: 90vh; max-height: 650px;
+            background: var(--bg-cristal); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 25px; border: 1px solid var(--borde-cristal);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8), inset 0 0 25px rgba(0,210,255,0.1);
+            display: flex; flex-direction: column; overflow: hidden; position: relative;
+            opacity: 0; transform: scale(0.9); transition: all 1.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            visibility: hidden;
+        }
+
+        .card.visible {
+            opacity: 1; transform: scale(1); visibility: visible;
+            animation: flotar 6s ease-in-out infinite 1s; 
+        }
+
+        @keyframes flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        /* --- PORTADA --- */
+        .portada {
+            height: 140px; min-height: 140px;
+            background: url('https://xatimg.com/image/4wZCb6r8KsPV.png') center/cover; position: relative;
+        }
+        .portada::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 70%;
+            background: linear-gradient(to top, rgba(10,15,25,0.9), transparent);
+        }
+
+        /* --- AVATAR Y HEADER --- */
+        .perfil-header { display: flex; flex-direction: column; align-items: center; margin-top: -60px; position: relative; z-index: 2; }
+        
+        .avatar {
+            width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+            border: 3px solid rgba(10, 15, 25, 0.9); box-shadow: 0 0 20px var(--azul-brillo);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .avatar:hover { transform: scale(1.1) rotate(5deg); box-shadow: 0 0 40px var(--azul-brillo); border-color: var(--azul-brillo); }
+
+        .nombre {
+            font-family: 'Oswald', sans-serif; font-size: 26px; margin: 10px 0 2px; color: #fff;
+            text-transform: uppercase; text-shadow: 0 0 15px var(--azul-brillo); letter-spacing: 1px;
+        }
+
+        .id-codigo {
+            font-family: 'Space Mono', monospace; font-size: 11px; color: var(--oro);
+            background: rgba(0, 0, 0, 0.6); padding: 4px 15px; border-radius: 20px;
+            border: 1px solid rgba(197, 176, 120, 0.4); margin-bottom: 5px; letter-spacing: 3px;
+            box-shadow: 0 0 10px rgba(197, 176, 120, 0.2);
+        }
+
+        /* --- NAVEGACIÓN --- */
+        .nav { display: flex; justify-content: space-around; padding: 10px 10px; border-bottom: 1px solid rgba(0, 210, 255, 0.15); }
+        .nav-btn {
+            background: none; border: none; color: rgba(255, 255, 255, 0.4); font-size: 22px; transition: 0.3s; position: relative; padding: 10px;
+        }
+        .nav-btn::after {
+            content: ''; position: absolute; bottom: -11px; left: 50%; transform: translateX(-50%); width: 0; height: 3px;
+            background: var(--azul-brillo); transition: 0.3s; box-shadow: 0 0 10px var(--azul-brillo);
+        }
+        .nav-btn.activo { color: var(--azul-brillo); transform: translateY(-3px); }
+        .nav-btn.activo::after { width: 100%; }
+
+        /* --- CONTENIDO INTERNO --- */
+        .contenido {
+            flex: 1; overflow-y: auto; padding: 20px; position: relative;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .contenido::-webkit-scrollbar { display: none; }
+        .tab { display: none; opacity: 0; }
+        .tab.activa { display: block; animation: zoomFade 0.4s forwards; }
+
+        @keyframes zoomFade { 0% { opacity: 0; transform: scale(0.95) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+
+        /* --- SECCIONES --- */
+        .bio { font-size: 13px; color: #b0c4de; text-align: center; line-height: 1.6; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+        
+        .datos {
+            display: flex; justify-content: space-around; background: rgba(0, 0, 0, 0.4); border-radius: 15px;
+            padding: 15px 0; border: 1px solid rgba(0, 210, 255, 0.15); box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+        .dato-item { text-align: center; }
+        .dato-num { font-family: 'Oswald'; font-size: 20px; color: var(--azul-brillo); display: block; text-shadow: 0 0 10px var(--azul-brillo);}
+        .dato-text { font-size: 9px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px;}
+
+        /* --- GALERÍA MEJORADA --- */
+        .galeria { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .foto-galeria {
+            width: 100%; height: 100px; border-radius: 15px; object-fit: cover;
+            border: 2px solid transparent; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .foto-galeria:hover {
+            border-color: var(--azul-brillo); transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 210, 255, 0.6); z-index: 10;
+        }
+
+        /* --- AMIGOS --- */
+        .amigo-item {
+            display:flex; gap:15px; margin-bottom:15px; background: rgba(0, 210, 255, 0.05); padding:10px; 
+            border-radius:15px; align-items:center; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s;
+        }
+        .amigo-item:hover {
+            border-color: var(--azul-brillo); background: rgba(0, 210, 255, 0.1);
+            transform: translateX(5px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2);
+        }
+
+        /* --- REPRODUCTOR MINI PRO --- */
+        .mini-player {
+            background: linear-gradient(145deg, rgba(0,25,50,0.8), rgba(0,0,0,0.9)); border-radius: 20px; padding: 15px;
+            border: 1px solid rgba(0, 210, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 210, 255, 0.1);
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .player-top { display: flex; align-items: center; gap: 15px; }
+        .cover-musica {
+            width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 2px solid var(--azul-brillo);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.5); animation: girar 4s linear infinite; animation-play-state: paused; flex-shrink: 0;
+        }
+        @keyframes girar { 100% { transform: rotate(360deg); } }
+        .cover-musica.play { animation-play-state: running; }
+
+        .player-info { flex: 1; text-align: left; display: flex; flex-direction: column; justify-content: center; overflow: hidden;}
+        .track-titulo { font-size: 15px; font-weight: 600; margin: 0 0 2px; color: #fff; text-shadow: 0 0 5px rgba(0,210,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .track-artista { font-size: 11px; color: var(--oro); margin: 0; text-transform: uppercase; letter-spacing: 1px;}
+
+        .equalizer { display: flex; align-items: flex-end; gap: 3px; height: 15px; margin-top: 5px; }
+        .bar { width: 3px; background: var(--oro); border-radius: 2px; height: 3px; transition: 0.2s; }
+        .equalizer.play .bar { animation: sonido 1.2s infinite ease-in-out alternate; }
+        .equalizer.play .bar:nth-child(odd) { background: var(--azul-brillo); }
+        .equalizer.play .bar:nth-child(1) { animation-delay: 0.1s; } .equalizer.play .bar:nth-child(2) { animation-delay: 0.4s; }
+        .equalizer.play .bar:nth-child(3) { animation-delay: 0.2s; } .equalizer.play .bar:nth-child(4) { animation-delay: 0.5s; }
+        .equalizer.play .bar:nth-child(5) { animation-delay: 0.3s; }
+        @keyframes sonido { 0% { height: 3px; opacity: 0.5; } 100% { height: 15px; opacity: 1; box-shadow: 0 0 5px currentColor; } }
+
+        .controles-mini { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
+        .ctrl-btn { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 14px; transition: 0.2s; padding: 5px;}
+        .ctrl-btn:hover { color: var(--oro); text-shadow: 0 0 5px var(--oro); }
+        .play-btn {
+            width: 45px; height: 45px; border-radius: 50%; background: transparent; color: var(--azul-brillo); border: 2px solid var(--azul-brillo);
+            display: flex; justify-content: center; align-items: center; font-size: 16px; transition: 0.3s; box-shadow: inset 0 0 10px rgba(0, 210, 255, 0.3), 0 0 15px rgba(0, 210, 255, 0.3);
+        }
+        .play-btn:hover { background: var(--azul-brillo); color: #000; box-shadow: 0 0 25px var(--azul-brillo); transform: scale(1.1); }
+
+        .barra-progreso-bg { width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; position: relative; }
+        .progreso-activo { width: 0%; height: 100%; background: var(--azul-brillo); box-shadow: 0 0 10px var(--azul-brillo); transition: width 0.1s linear; pointer-events: none; }
+
+        /* --- MODAL / LIGHTBOX PARA FOTOS --- */
+        .lightbox {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            z-index: 20000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: 0.4s ease;
+        }
+        .lightbox.activa { opacity: 1; visibility: visible; }
+        
+        .lightbox img {
+            max-width: 90%; max-height: 80vh; border-radius: 15px;
+            box-shadow: 0 0 40px var(--azul-brillo), 0 0 20px rgba(255,255,255,0.2);
+            transform: scale(0.7); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid var(--azul-brillo);
+        }
+        .lightbox.activa img { transform: scale(1); }
+        
+        .cerrar-lightbox {
+            position: absolute; top: 30px; right: 40px; font-size: 40px; color: #fff;
+            text-shadow: 0 0 15px var(--azul-brillo); transition: 0.3s;
+        }
+        .cerrar-lightbox:hover { transform: scale(1.2) rotate(90deg); color: var(--azul-brillo); }
+
+    </style>
+</head>
+<body>
+
+    <div class="cursor-glow" id="cursor-glow"></div>
+    <div class="cursor-dot" id="cursor-dot"></div>
+
+    <div class="lightbox" id="lightbox" onclick="cerrarLightbox()">
+        <span class="cerrar-lightbox">&times;</span>
+        <img id="lightbox-img" src="" alt="Foto Ampliada">
+    </div>
+
+    <audio id="audio-bg" loop>
+        <source src="audio/musica.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="pantalla-intro" onclick="entrarAlPerfil()">
+        <div class="intro-bg" id="intro-bg"></div>
+        <div class="intro-bg-overlay" id="intro-overlay"></div>
+        
+        <div class="intro-contenido" id="intro-texto">
+            <h1 class="intro-titulo">Rebel</h1>
+            <p class="intro-sub"><i class="fa-solid fa-play"></i> Haz clic para entrar</p>
+        </div>
+    </div>
+
+    <div class="card" id="tarjeta-principal">
+        <div class="portada"></div>
+
+        <div class="perfil-header">
+            <img src="https://xatimg.com/image/NqTnbFNdsWQU.jpg" alt="Avatar" class="avatar">
+            <h1 class="nombre">Rebel</h1>
+            <div class="id-codigo">#195482736</div>
+        </div>
+
+        <div class="nav">
+            <button class="nav-btn activo clikable" onclick="abrirTab('tab-perfil', this)" title="Perfil"><i class="fa-regular fa-user"></i></button>
+            <button class="nav-btn clikable" onclick="abrirTab('tab-galeria', this)" title="Galería"><i class="fa-regular fa-images"></i></button>
+            <button class="nav-btn clikable" onclick="abrirTab('tab-amigos', this)" title="Amigos"><i class="fa-solid fa-users"></i></button>
+            <button class="nav-btn clikable" onclick="abrirTab('tab-musica', this)" title="Música"><i class="fa-solid fa-compact-disc"></i></button>
+        </div>
+
+        <div class="contenido">
+            
+            <div id="tab-perfil" class="tab activa">
+                <p class="bio">Aqui Andamos y no nos vamos, si nos vamos nos regresamos Bendita Seas Maldita Rebel Gloriosa Eres Rebel Norte.</p>
+                <div class="datos">
+                    <div class="dato-item">
+                        <span class="dato-num">100%</span>
+                        <span class="dato-text">Hincha Pumas</span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="dato-num">100%</span>
+                        <span class="dato-text">Rebel Potrero</span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="dato-num">100%</span>
+                        <span class="dato-text">El Terror</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-galeria" class="tab">
+                <div class="galeria">
+                    <img src="https://xatimg.com/image/NqTnbFNdsWQU.jpg" class="foto-galeria clikable" onclick="abrirLightbox(this.src)">
+                    <img src="https://xatimg.com/image/usFESaIccqrR.jpg" class="foto-galeria clikable" onclick="abrirLightbox(this.src)">
+                    <img src="https://xatimg.com/image/f8exM2AHwsrv.jpg" class="foto-galeria clikable" onclick="abrirLightbox(this.src)">
+                </div>
+            </div>
+
+            <div id="tab-amigos" class="tab">
+                <div class="amigo-item clikable">
+                    <img src="https://i.imgur.com/XJjmyeE_d.webp?maxwidth=760&fidelity=grand" style="width:45px; height:45px; border-radius:50%; object-fit:cover;">
+                    <div>
+                        <div style="font-weight:600; font-size:14px;">Bastet</div>
+                        <div style="font-size:11px; color:var(--oro);">@iBastetCaat</div>
+                    </div>
+                </div>
+                <div class="amigo-item clikable">
+                    <img src="https://xatimg.com/image/GuzWZgSY48eA.gif" style="width:45px; height:45px; border-radius:50%; object-fit:cover;">
+                    <div>
+                        <div style="font-weight:600; font-size:14px;">Rayko</div>
+                        <div style="font-size:11px; color:var(--oro);">Rayy</div>
+                    </div>
+                </div>
+                <div class="amigo-item clikable">
+                    <img src="https://i.pinimg.com/736x/85/a9/48/85a9486e45bfc94abf5a37182ae7f7c4.jpg" style="width:45px; height:45px; border-radius:50%; object-fit:cover;">
+                    <div>
+                        <div style="font-weight:600; font-size:14px;">Diana</div>
+                        <div style="font-size:11px; color:var(--oro);">@Angieeeeex</div>
+                    </div>
+                </div>
+                <div class="amigo-item clikable">
+                    <img src="https://i0.xat.com/web_gear/chat/GetImage9.php?s&W=80&H=80&U=https://xatimg.com/image/IKJYDpENSshK.png" style="width:45px; height:45px; border-radius:50%; object-fit:cover;">
+                    <div>
+                        <div style="font-weight:600; font-size:14px;">Pulseritas</div>
+                        <div style="font-size:11px; color:var(--oro);">@PaLomiitaa1</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-musica" class="tab">
+                <div class="mini-player">
+                    
+                    <div class="player-top">
+                        <img src="https://xatimg.com/image/L6KZ5Karp5m9.jpg" class="cover-musica" id="cover">
+                        
+                        <div class="player-info">
+                            <h3 class="track-titulo">Alto Contenido</h3>
+                            <p class="track-artista">Maldy Ft. Randy & Jowell...</p>
+                            
+                            <div class="equalizer" id="eq">
+                                <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="barra-progreso-bg clikable" id="barra-bg" onclick="adelantarMusica(event)">
+                        <div class="progreso-activo" id="progreso"></div>
+                    </div>
+
+                    <div class="controles-mini">
+                        <button class="ctrl-btn clikable"><i class="fa-solid fa-backward-step"></i></button>
+                        <button class="play-btn clikable" onclick="toggleMusica()">
+                            <i class="fa-solid fa-play" id="icon-play"></i>
+                        </button>
+                        <button class="ctrl-btn clikable"><i class="fa-solid fa-forward-step"></i></button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* --- LÓGICA DEL CURSOR MÁGICO --- */
+        const cursorGlow = document.getElementById('cursor-glow');
+        const cursorDot = document.getElementById('cursor-dot');
+
+        document.addEventListener('mousemove', (e) => {
+            cursorGlow.style.left = e.clientX + 'px';
+            cursorGlow.style.top = e.clientY + 'px';
+            cursorDot.style.left = e.clientX + 'px';
+            cursorDot.style.top = e.clientY + 'px';
+        });
+
+        // Hacer que el brillo crezca al pasar por elementos clickeables
+        document.querySelectorAll('.clikable, #pantalla-intro, .avatar').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorGlow.style.width = '60px';
+                cursorGlow.style.height = '60px';
+                cursorGlow.style.background = 'radial-gradient(circle, rgba(0, 210, 255, 0.9) 0%, rgba(0, 210, 255, 0) 70%)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorGlow.style.width = '30px';
+                cursorGlow.style.height = '30px';
+                cursorGlow.style.background = 'radial-gradient(circle, rgba(0, 210, 255, 0.8) 0%, rgba(0, 210, 255, 0) 70%)';
+            });
+        });
+
+        /* --- LÓGICA DEL LIGHTBOX (VISOR DE FOTOS) --- */
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+
+        function abrirLightbox(src) {
+            lightboxImg.src = src;
+            lightbox.classList.add('activa');
+        }
+
+        function cerrarLightbox() {
+            lightbox.classList.remove('activa');
+        }
+
+        /* --- LÓGICA DEL ENTORNO --- */
+        const audio = document.getElementById('audio-bg');
+        const intro = document.getElementById('pantalla-intro');
+        const introTexto = document.getElementById('intro-texto');
+        const introBg = document.getElementById('intro-bg');
+        const introOverlay = document.getElementById('intro-overlay');
+        const tarjeta = document.getElementById('tarjeta-principal');
+        const iconPlay = document.getElementById('icon-play');
+        const cover = document.getElementById('cover');
+        const eq = document.getElementById('eq');
+        const barraProgreso = document.getElementById('progreso');
+        const barraBg = document.getElementById('barra-bg');
+
+        function entrarAlPerfil() {
+            introTexto.style.opacity = '0';
+            introTexto.style.transform = 'scale(0.8)';
+            introBg.style.filter = 'grayscale(0%) blur(0px)';
+            introOverlay.style.opacity = '0.3'; 
+            intro.style.pointerEvents = 'none';
+
+            setTimeout(() => {
+                intro.style.opacity = '0'; 
+                setTimeout(() => {
+                    intro.style.display = 'none'; 
+                    tarjeta.classList.add('visible'); 
+                    
+                    audio.play().then(() => {
+                        activarAnimaciones();
+                    }).catch(e => console.log("Error al reproducir audio"));
+                    
+                }, 1000); 
+            }, 1500); 
+        }
+
+        function abrirTab(tabId, elemento) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('activa'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('activa'));
+            document.getElementById(tabId).classList.add('activa');
+            elemento.classList.add('activa');
+        }
+
+        function toggleMusica() {
+            if (audio.paused) {
+                audio.play(); activarAnimaciones();
+            } else {
+                audio.pause(); desactivarAnimaciones();
+            }
+        }
+
+        function activarAnimaciones() { iconPlay.classList.replace('fa-play', 'fa-pause'); cover.classList.add('play'); eq.classList.add('play'); }
+        function desactivarAnimaciones() { iconPlay.classList.replace('fa-pause', 'fa-play'); cover.classList.remove('play'); eq.classList.remove('play'); }
+
+        audio.addEventListener('timeupdate', () => {
+            if(audio.duration) {
+                const porcentaje = (audio.currentTime / audio.duration) * 100;
+                barraProgreso.style.width = porcentaje + '%';
+            }
+        });
+
+        function adelantarMusica(event) {
+            const anchoTotal = barraBg.clientWidth;
+            const clickX = event.offsetX;
+            const duracion = audio.duration;
+            if (duracion) { audio.currentTime = (clickX / anchoTotal) * duracion; }
+        }
+    </script>
+</body>
+</html>
